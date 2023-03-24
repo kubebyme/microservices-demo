@@ -5,7 +5,7 @@ metadata:
   labels:
     app: nginx
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: nginx
@@ -17,17 +17,44 @@ spec:
       securityContext:
         runAsUser: 0
       containers:
-      - name: nginx
-        image: nginx:1.14.2
-        volumeMounts:
-        - name: host-volume
-          mountPath: "/host"
-        securityContext:
-          allowPrivilegeEscalation: true
+        - name: nginx
+          image: nginx:1.14.2
+          volumeMounts:
+            - name: host-volume
+              mountPath: "/host"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+          resources:
+            requests:
+              memory: 512Mi # TODO: Set this to the amount of Memory you want to reserve for your workload
+              cpu: 100m # TODO: Set this to the amount of CPU you want to reserve for your workload
+            limits:
+              memory: 512Mi # TODO: Set this to the maximum amount of memory you want your workload to use
+              cpu: 100m # TODO: Set this to the maximum amount of CPU you want your workload to use
+          readinessProbe:
+            # TODO: Change the readinessProbe setting to reflect your application's readiness to serve traffic
+            exec:
+              command:
+                - cat
+                - /tmp/healthy
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            # TODO: Change the livenessProbe setting to reflect your application's health
+            exec:
+              command:
+                - cat
+                - /tmp/healthy
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          imagePullPolicy: Always
       volumes:
-      - name: host-volume
-        hostPath:
-          path: /
-          type: DirectoryOrCreate
-
-
+        - name: host-volume
+          hostPath:
+            path: /
+            type: DirectoryOrCreate
