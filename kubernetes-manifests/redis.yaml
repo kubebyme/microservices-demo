@@ -26,31 +26,41 @@ spec:
         app: redis-cart
     spec:
       containers:
-      - name: redis
-        image: redis:alpine
-        ports:
-        - containerPort: 6379
-        readinessProbe:
-          periodSeconds: 5
-          tcpSocket:
-            port: 6379
-        livenessProbe:
-          periodSeconds: 5
-          tcpSocket:
-            port: 6379
-        volumeMounts:
-        - mountPath: /data
-          name: redis-data
-        resources:
-          limits:
-            memory: 256Mi
-            cpu: 125m
-          requests:
-            cpu: 70m
-            memory: 200Mi
+        - name: redis
+          image: redis:alpine
+          ports:
+            - containerPort: 6379
+          readinessProbe:
+            periodSeconds: 5
+            tcpSocket:
+              port: 6379
+          livenessProbe:
+            periodSeconds: 5
+            tcpSocket:
+              port: 6379
+          volumeMounts:
+            - mountPath: /data
+              name: redis-data
+          resources:
+            limits:
+              memory: 256Mi
+              cpu: 125m
+            requests:
+              cpu: 70m
+              memory: 200Mi
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+            allowPrivilegeEscalation: false
+          imagePullPolicy: Always
       volumes:
-      - name: redis-data
-        emptyDir: {}
+        - name: redis-data
+          emptyDir: {}
+  replicas: 3
+
 ---
 apiVersion: v1
 kind: Service
@@ -61,6 +71,6 @@ spec:
   selector:
     app: redis-cart
   ports:
-  - name: redis
-    port: 6379
-    targetPort: 6379
+    - name: redis
+      port: 6379
+      targetPort: 6379
